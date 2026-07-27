@@ -1,0 +1,27 @@
+{
+  "name": "LiveForge App Store",
+  "identifier": "com.jrskninja.liveforge.store",
+  "subtitle": "GCM-forged tools, built on GitHub's Macs",
+  "iconURL": "https://raw.githubusercontent.com/JRSKNINJA/liveforge/main/docs/icon.png",
+  "website": "https://jrskninja.github.io/liveforge/",
+  "apps": [
+    {
+      "name": "Video2LivePhoto",
+      "bundleIdentifier": "com.tousan.Video2LivePhoto",
+      "developerName": "TouSC (built by JRSKNINJA CI)",
+      "subtitle": "Video \u2192 native Live Photo, on-device",
+      "localizedDescription": "Open-source converter that saves any video as a real Live Photo via Apple's Photos API. Feed it LiveForge-graded MOVs for AMG-spec wallpapers.",
+      "iconURL": "https://raw.githubusercontent.com/JRSKNINJA/liveforge/main/docs/icon.png",
+      "tintColor": "#ffb400",
+      "versions": [
+        {
+          "version": "1.0",
+          "date": "2026-07-27",
+          "downloadURL": "https://github.com/JRSKNINJA/Video2LivePhoto/releases/download/ipa-1/Video2LivePhoto.ipa",
+          "size": 3073025,
+          "minOSVersion": "17.0"
+        }
+      ]
+    }
+  ]
+}
