@@ -286,12 +286,125 @@ def convert(src: Path, outdir: Path, base_args, index: int):
          "-frames:v", "1", "-q:v", "2", str(jpg_out)])
 
     inject_jpeg_identifier(jpg_out, content_id)
+    inject_still_image_time(mov_out, key_t)
 
     ok = (read_jpeg_identifier(jpg_out) == content_id
           and mov_contains_identifier(mov_out, content_id))
     print(f"  pair check: {'✓ VALID' if ok else '✗ FAILED'}"
           f"   still@{key_t:.2f}s   {mov_dur:.2f}s clip")
     return ok
+
+
+
+
+# ---------------------------------------- still-image-time track (mebx) -----
+# Photos requires the MOV to carry a timed-metadata track holding
+# com.apple.quicktime.still-image-time; without it, iCloud will not pair.
+
+def _b(kind, payload):
+    return struct.pack(">I", 8 + len(payload)) + kind + payload
+
+
+def _fb(kind, payload, version=0, flags=0):
+    return _b(kind, struct.pack(">B", version) + flags.to_bytes(3, "big") + payload)
+
+
+def _parse_boxes(data, start, end):
+    out = []
+    off = start
+    while off + 8 <= end:
+        size = int.from_bytes(data[off:off+4], "big")
+        kind = bytes(data[off+4:off+8])
+        hdr = 8
+        if size == 1:
+            size = int.from_bytes(data[off+8:off+16], "big"); hdr = 16
+        elif size == 0:
+            size = end - off
+        if size < hdr:
+            break
+        out.append((off, size, kind, hdr))
+        off += size
+    return out
+
+
+def inject_still_image_time(mov_path: Path, still_seconds: float):
+    data = bytearray(mov_path.read_bytes())
+    top = _parse_boxes(data, 0, len(data))
+    moov = next((t for t in top if t[2] == b"moov"), None)
+    mdat = next((t for t in reversed(top) if t[2] == b"mdat"), None)
+    if not moov or not mdat:
+        sys.exit("still-image-time: moov/mdat not found")
+    if moov[0] < mdat[0]:
+        sys.exit("still-image-time: faststart layout unsupported")
+
+    # movie header: timescale / duration / next track id
+    mvhd = next(t for t in _parse_boxes(data, moov[0]+moov[3], moov[0]+moov[1])
+                if t[2] == b"mvhd")
+    v = data[mvhd[0]+8]
+    p = mvhd[0] + 12
+    if v == 1:
+        mts = int.from_bytes(data[p+16:p+20], "big")
+        mdur = int.from_bytes(data[p+20:p+28], "big")
+    else:
+        mts = int.from_bytes(data[p+8:p+12], "big")
+        mdur = int.from_bytes(data[p+12:p+16], "big")
+    nid_off = mvhd[0] + mvhd[1] - 4
+    track_id = int.from_bytes(data[nid_off:nid_off+4], "big")
+    data[nid_off:nid_off+4] = struct.pack(">I", track_id + 1)
+
+    still_mv = min(max(0, round(still_seconds * mts)), max(mdur - 1, 0))
+    span_mv = max(mdur - still_mv, 1)
+    mts_meta = 600
+    span_meta = max(round(span_mv * mts_meta / mts), 1)
+
+    sample = b"\x00\x00\x00\x09\x00\x00\x00\x01\xff"
+    sample_off = mdat[0] + mdat[1]          # append at current mdat end
+
+    keyd = _b(b"keyd", b"mdta" + b"com.apple.quicktime.still-image-time")
+    keys = _b(b"keys", _b(b"\x00\x00\x00\x01"[0:4], keyd)[8:] and
+              struct.pack(">I", 8+len(keyd)) + b"\x00\x00\x00\x01" + keyd)
+    mebx = _b(b"mebx", b"\x00"*6 + struct.pack(">H", 1) + keys)
+    stsd = _fb(b"stsd", struct.pack(">I", 1) + mebx)
+    stts = _fb(b"stts", struct.pack(">III", 1, 1, span_meta))
+    stsc = _fb(b"stsc", struct.pack(">IIII", 1, 1, 1, 1))
+    stsz = _fb(b"stsz", struct.pack(">II", len(sample), 1))
+    stco = _fb(b"stco", struct.pack(">II", 1, sample_off))
+    stbl = _b(b"stbl", stsd + stts + stsc + stsz + stco)
+    url_ = _fb(b"url ", b"", flags=1)
+    dref = _fb(b"dref", struct.pack(">I", 1) + url_)
+    dinf = _b(b"dinf", dref)
+    nmhd = _fb(b"nmhd", b"")
+    minf = _b(b"minf", nmhd + dinf + stbl)
+    hdlr = _fb(b"hdlr", b"\x00"*4 + b"meta" + b"\x00"*12 +
+               b"Core Media Metadata\x00")
+    mdhd = _fb(b"mdhd", struct.pack(">IIIIHH", 0, 0, mts_meta, span_meta,
+                                    0x55C4, 0))
+    mdia = _b(b"mdia", mdhd + hdlr + minf)
+    entries = b""
+    if still_mv > 0:
+        entries += struct.pack(">IiI", still_mv, -1, 0x00010000)
+    entries += struct.pack(">IiI", span_mv, 0, 0x00010000)
+    elst = _fb(b"elst", struct.pack(">I", 2 if still_mv else 1) + entries)
+    edts = _b(b"edts", elst)
+    matrix = struct.pack(">9i", 0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000)
+    tkhd = _fb(b"tkhd", struct.pack(">IIIII", 0, 0, track_id, 0, mdur) +
+               b"\x00"*8 + struct.pack(">HHHH", 0, 0, 0, 0) + matrix +
+               struct.pack(">II", 0, 0), flags=7)
+    trak = _b(b"trak", tkhd + edts + mdia)
+
+    # splice: sample after mdat, trak at end of moov (moov sits after mdat)
+    new = bytes(data[:sample_off]) + sample + bytes(data[sample_off:])
+    new = bytearray(new)
+    # patch mdat size
+    if mdat[3] == 16:
+        new[mdat[0]+8:mdat[0]+16] = struct.pack(">Q", mdat[1] + len(sample))
+    else:
+        new[mdat[0]:mdat[0]+4] = struct.pack(">I", mdat[1] + len(sample))
+    moov_off = moov[0] + len(sample)
+    moov_end = moov_off + moov[1]
+    new = new[:moov_end] + trak + new[moov_end:]
+    new[moov_off:moov_off+4] = struct.pack(">I", moov[1] + len(trak))
+    mov_path.write_bytes(bytes(new))
 
 
 # ------------------------------------------------------------------- main ---
