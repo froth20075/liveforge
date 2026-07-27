@@ -1,0 +1,60 @@
+name: Convert inbox videos to Live Photos
+
+on:
+  push:
+    paths:
+      - "inbox/**"
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Skip the run triggered by this workflow's own commit
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for videos
+        id: check
+        run: |
+          shopt -s nullglob nocaseglob
+          vids=(inbox/*.mp4 inbox/*.mov inbox/*.m4v inbox/*.webm inbox/*.mkv inbox/*.avi inbox/*.gif)
+          echo "count=${#vids[@]}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@v5
+        if: steps.check.outputs.count != '0'
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        if: steps.check.outputs.count != '0'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q ffmpeg
+          pip install -r requirements.txt
+
+      - name: Convert all inbox videos
+        if: steps.check.outputs.count != '0'
+        run: python liveforge.py inbox --batch --outdir outputs --bounce --res auto
+
+      - name: Commit results and clear inbox
+        if: steps.check.outputs.count != '0'
+        run: |
+          shopt -s nullglob nocaseglob
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          rm -f inbox/*.mp4 inbox/*.mov inbox/*.m4v inbox/*.webm inbox/*.mkv inbox/*.avi inbox/*.gif
+          git add -A outputs inbox
+          git commit -m "LiveForge: converted inbox videos [skip ci]" || echo "nothing to commit"
+          git push
+
+      - name: Upload artifact copy
+        if: steps.check.outputs.count != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-photos-${{ github.run_number }}
+          path: outputs/
+          retention-days: 7

@@ -1,0 +1,82 @@
+name: Convert video URL to Live Photo
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: "Direct URL to a video file"
+        required: true
+        type: string
+      start:
+        description: "Trim start (seconds)"
+        default: "0"
+        type: string
+      end:
+        description: "Trim end (seconds, blank = full)"
+        default: ""
+        type: string
+      speed:
+        description: "Playback speed (e.g. 1.5)"
+        default: "1"
+        type: string
+      keyframe:
+        description: "Still-frame timestamp (blank = middle)"
+        default: ""
+        type: string
+      bounce:
+        description: "Forward-then-backward loop"
+        default: false
+        type: boolean
+      reverse:
+        description: "Play in reverse"
+        default: false
+        type: boolean
+      preset:
+        description: "Color preset"
+        default: "none"
+        type: choice
+        options: [none, cinematic, mono, warm, cool, vivid, fade, noir]
+      res:
+        description: "Resolution: 15pro / 15promax / 14 / se / auto / WxH"
+        default: "auto"
+        type: string
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q ffmpeg
+          pip install -r requirements.txt
+
+      - name: Download source video
+        run: curl -fsSL "${{ inputs.video_url }}" -o source_video
+
+      - name: Convert
+        run: |
+          ARGS=(source_video --outdir live_out)
+          ARGS+=(--start "${{ inputs.start }}")
+          [ -n "${{ inputs.end }}" ] && ARGS+=(--end "${{ inputs.end }}")
+          ARGS+=(--speed "${{ inputs.speed }}")
+          [ -n "${{ inputs.keyframe }}" ] && ARGS+=(--keyframe "${{ inputs.keyframe }}")
+          [ "${{ inputs.bounce }}" = "true" ] && ARGS+=(--bounce)
+          [ "${{ inputs.reverse }}" = "true" ] && ARGS+=(--reverse)
+          ARGS+=(--preset "${{ inputs.preset }}")
+          ARGS+=(--res "${{ inputs.res }}")
+          python liveforge.py "${ARGS[@]}"
+
+      - name: Upload Live Photo pair
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-photo-${{ github.run_number }}
+          path: live_out/
+          retention-days: 7
