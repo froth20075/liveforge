@@ -4,6 +4,10 @@ Turn any video into a real iPhone **Live Photo / Live Wallpaper** — free, unli
 
 Every conversion produces `IMG_xxxx.JPG` + `IMG_xxxx.MOV` sharing an Apple Content Identifier — the exact mechanism iOS uses to recognize a Live Photo.
 
+## 📲 iPhone install
+
+**[Shortcut installer & builder →](https://jrskninja.github.io/liveforge/shortcut.html)** — set up once, then share any video from Photos **or any link from Pinterest / TikTok / YouTube** straight to LiveForge. The cloud (yt-dlp + FFmpeg) does the rest.
+
 ## Four ways to run it
 
 ### 1. Locally (Windows / Mac / Linux)

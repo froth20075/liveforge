@@ -21,7 +21,7 @@ jobs:
         id: check
         run: |
           shopt -s nullglob nocaseglob
-          vids=(inbox/*.mp4 inbox/*.mov inbox/*.m4v inbox/*.webm inbox/*.mkv inbox/*.avi inbox/*.gif)
+          vids=(inbox/*.mp4 inbox/*.mov inbox/*.m4v inbox/*.webm inbox/*.mkv inbox/*.avi inbox/*.gif inbox/*.link)
           echo "count=${#vids[@]}" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-python@v5
@@ -34,7 +34,20 @@ jobs:
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q ffmpeg
-          pip install -r requirements.txt
+          pip install -r requirements.txt yt-dlp
+
+      - name: Resolve link files (Pinterest / TikTok / YouTube / direct URLs)
+        if: steps.check.outputs.count != '0'
+        run: |
+          shopt -s nullglob
+          for f in inbox/*.link; do
+            url=$(tr -d '\r\n ' < "$f")
+            stem=$(basename "$f" .link)
+            echo "resolving $stem ← $url"
+            yt-dlp -o "inbox/${stem}.%(ext)s" -f "mp4/bv*[ext=mp4]/b" --no-playlist "$url" \
+              || curl -fsSL "$url" -o "inbox/${stem}.mp4"
+            rm -f "$f"
+          done
 
       - name: Convert all inbox videos
         if: steps.check.outputs.count != '0'
@@ -46,7 +59,7 @@ jobs:
           shopt -s nullglob nocaseglob
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          rm -f inbox/*.mp4 inbox/*.mov inbox/*.m4v inbox/*.webm inbox/*.mkv inbox/*.avi inbox/*.gif
+          rm -f inbox/*.mp4 inbox/*.mov inbox/*.m4v inbox/*.webm inbox/*.mkv inbox/*.avi inbox/*.gif inbox/*.link
           git add -A outputs inbox
           git commit -m "LiveForge: converted inbox videos [skip ci]" || echo "nothing to commit"
           git push

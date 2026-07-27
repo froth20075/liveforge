@@ -62,6 +62,16 @@ text-transform:uppercase;margin-top:26px}
   <div class="tag">share sheet → live photo · <a class="back" href="index.html">← studio</a></div>
 </header>
 
+<section id="install">
+  <div class="shead">Install</div>
+  <div class="sbody" id="installbox">
+    <p style="font-size:13px;line-height:1.7">One-tap install link appears here once the
+    first build is shared back (Apple only allows shortcut installs via iCloud links
+    created on a device). Until then: build it below in ~3 minutes — every value is
+    pre-filled and copyable.</p>
+  </div>
+</section>
+
 <section>
   <div class="shead">Your setup</div>
   <div class="sbody">
@@ -85,7 +95,7 @@ text-transform:uppercase;margin-top:26px}
 </section>
 
 <section>
-  <div class="shead">Build it — Shortcuts app</div>
+  <div class="shead">Shortcut 1 · “LiveForge Video” — share from Photos</div>
   <div class="step"><h3><span>0</span>New Shortcut → ⓘ → enable “Show in Share Sheet”</h3>
     <p>Name it <b style="color:var(--amber)">LiveForge</b>. Set share sheet input types to Media / Videos.</p></div>
 
@@ -126,7 +136,26 @@ text-transform:uppercase;margin-top:26px}
     <div class="copyrow"><div class="val" id="v-studio"></div>
       <button class="cp" onclick="cp('v-studio')">copy</button></div></div>
 
-  <div class="note"><b>That's the whole shortcut — 7 actions.</b> Share any video →
+</section>
+
+<section>
+  <div class="shead">Shortcut 2 · “LiveForge Link” — share from Pinterest / TikTok / YouTube</div>
+  <div class="step"><h3><span>0</span>New Shortcut → ⓘ → Show in Share Sheet → input: URLs</h3>
+    <p>Name it <b style="color:var(--amber)">LiveForge Link</b>. The cloud runs yt-dlp on
+    whatever page you share and pulls the video out.</p></div>
+  <div class="step"><h3><span>1</span>Action: “Text” → insert Shortcut Input</h3>
+    <p>Just the shared URL as text.</p></div>
+  <div class="step"><h3><span>2</span>Action: “Base64 Encode” (the Text)</h3>
+    <p>Line Breaks: <b>None</b>.</p></div>
+  <div class="step"><h3><span>3</span>Action: “Format Date” — same format string as above</h3></div>
+  <div class="step"><h3><span>4</span>Action: “Dictionary” — message=forge, content=Base64</h3></div>
+  <div class="step"><h3><span>5</span>Action: “Get Contents of URL” — PUT, same 2 headers, JSON body = Dictionary</h3>
+    <p>URL (note the <b>.link</b> ending — insert Formatted Date at FORMATTEDDATE):</p>
+    <div class="copyrow"><div class="val" id="v-urllink"></div>
+      <button class="cp" onclick="cp('v-urllink')">copy</button></div></div>
+  <div class="step"><h3><span>6</span>“Show Notification” + optional “Open URLs” → Studio</h3></div>
+
+  <div class="note"><b>Each shortcut is one recipe.</b> Share any video →
   LiveForge → it uploads with your recipe baked in, the inbox workflow forges it, and
   the pair appears under Studio → Downloads (and as a GitHub Release). Download both
   files, upload them together at icloud.com → Photos, set as wallpaper.<br><br>
@@ -146,6 +175,8 @@ function upd(){
   const t=tokens(); const suffix=t.length?'__'+t.join('_'):'';
   $('v-url').textContent=
     `https://api.github.com/repos/${repo}/contents/inbox/clipFORMATTEDDATE${suffix}.mov`;
+  $('v-urllink').textContent=
+    `https://api.github.com/repos/${repo}/contents/inbox/clipFORMATTEDDATE${suffix}.link`;
   $('v-auth').textContent=`Bearer ${pat}`;
   const owner=repo.split('/')[0].toLowerCase(), name=repo.split('/')[1]||'liveforge';
   $('v-studio').textContent=`https://${owner}.github.io/${name}/`;

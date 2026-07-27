@@ -59,10 +59,13 @@ jobs:
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q ffmpeg
-          pip install -r requirements.txt
+          pip install -r requirements.txt yt-dlp
 
       - name: Download source video
-        run: curl -fsSL "${{ inputs.video_url }}" -o source_video
+        run: |
+          yt-dlp -o "source_video.%(ext)s" -f "mp4/bv*[ext=mp4]/b" --no-playlist "${{ inputs.video_url }}" \
+            && mv source_video.* source_video \
+            || curl -fsSL "${{ inputs.video_url }}" -o source_video
 
       - name: Convert
         run: |
