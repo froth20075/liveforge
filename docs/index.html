@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>LiveForge Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c0e; --panel:#101418; --panel2:#0d1013; --line:#1e262c;
+  --amber:#ffb400; --amber-dim:#7a5a10; --txt:#c9d4dc; --dim:#5d6b76;
+  --ok:#39d98a; --err:#ff5470; --run:#4aa8ff;
+  --display:'Chakra Petch',sans-serif; --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg); color:var(--txt); font-family:var(--mono);
+  font-size:14px; min-height:100vh; padding-bottom:60px;
+  background-image:
+    radial-gradient(ellipse 80% 40% at 50% -10%, rgba(255,180,0,.06), transparent),
+    repeating-linear-gradient(0deg, transparent 0 2px, rgba(255,255,255,.008) 2px 4px);
+}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px}
+header{padding:28px 0 18px;border-bottom:1px solid var(--line)}
+h1{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.04em;color:#fff}
+h1 b{color:var(--amber)}
+.tag{color:var(--dim);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-top:4px}
+.tag i{color:var(--amber);font-style:normal}
+section{background:var(--panel);border:1px solid var(--line);border-radius:6px;margin-top:18px;overflow:hidden}
+.shead{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--panel2);
+  border-bottom:1px solid var(--line);font-family:var(--display);font-weight:600;
+  font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#e8eef3}
+.shead::before{content:"";width:8px;height:8px;background:var(--amber);
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.sbody{padding:16px}
+label{display:block;color:var(--dim);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;margin:12px 0 5px}
+label:first-child{margin-top:0}
+input[type=text],input[type=password],input[type=url],select{
+  width:100%;background:#080a0c;border:1px solid var(--line);border-radius:4px;
+  color:var(--txt);font-family:var(--mono);font-size:14px;padding:10px 12px;
+  outline:none;transition:border-color .15s}
+input:focus,select:focus{border-color:var(--amber-dim)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.chip{border:1px solid var(--line);border-radius:3px;padding:7px 12px;cursor:pointer;
+  color:var(--dim);font-size:12px;user-select:none;transition:.15s;background:#080a0c}
+.chip.on{border-color:var(--amber);color:var(--amber);background:rgba(255,180,0,.07)}
+.btn{display:block;width:100%;margin-top:16px;padding:14px;border:none;border-radius:4px;
+  background:var(--amber);color:#0a0c0e;font-family:var(--display);font-weight:700;
+  font-size:15px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+  transition:.15s;position:relative}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{background:var(--amber-dim);cursor:wait}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--dim);
+  font-size:12px;padding:9px;margin-top:10px}
+.drop{border:1px dashed var(--line);border-radius:4px;padding:26px 14px;text-align:center;
+  color:var(--dim);cursor:pointer;transition:.15s;font-size:13px}
+.drop.hot,.drop:hover{border-color:var(--amber);color:var(--amber)}
+.drop b{color:var(--txt);display:block;margin-bottom:4px;font-weight:500}
+.drop.hasfile b{color:var(--ok)}
+#log{background:#060809;border-top:1px solid var(--line);padding:12px 16px;
+  font-size:12px;line-height:1.7;max-height:180px;overflow-y:auto;white-space:pre-wrap}
+#log .ok{color:var(--ok)} #log .err{color:var(--err)} #log .info{color:var(--run)}
+.runrow,.asset{display:flex;align-items:center;gap:10px;padding:10px 0;
+  border-bottom:1px solid var(--line);font-size:12.5px}
+.runrow:last-child,.asset:last-child{border-bottom:none}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot.success{background:var(--ok)} .dot.failure{background:var(--err)}
+.dot.in_progress,.dot.queued{background:var(--run);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.grow{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dl{color:var(--amber);text-decoration:none;border:1px solid var(--amber-dim);
+  border-radius:3px;padding:5px 10px;font-size:11px;letter-spacing:.06em;white-space:nowrap}
+.dl:active{background:rgba(255,180,0,.12)}
+.muted{color:var(--dim);font-size:11.5px;line-height:1.6;margin-top:10px}
+.muted a{color:var(--amber)}
+footer{text-align:center;color:var(--dim);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;margin-top:28px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>LIVE<b>FORGE</b> STUDIO</h1>
+  <div class="tag">video → live photo · powered by <i>github actions</i> · $0.00/month</div>
+</header>
+
+<section>
+  <div class="shead">Connection</div>
+  <div class="sbody">
+    <div class="row">
+      <div><label>Repo (owner/name)</label>
+        <input type="text" id="repo" placeholder="jwk/liveforge" autocapitalize="none"></div>
+      <div><label>Fine-grained PAT</label>
+        <input type="password" id="pat" placeholder="github_pat_…"></div>
+    </div>
+    <button class="btn ghost" onclick="saveConn()">Save connection</button>
+    <div class="muted">Token needs <b>Contents: write</b> + <b>Actions: write</b> on this repo only. Stored in this browser.</div>
+  </div>
+</section>
+
+<section>
+  <div class="shead">Forge</div>
+  <div class="sbody">
+    <div class="drop" id="drop" onclick="pick.click()">
+      <b id="dropname">Tap to choose a video</b>
+      <span>or paste a direct URL below · max ~40 MB via upload</span>
+    </div>
+    <input type="file" id="pick" accept="video/*,.gif" hidden>
+    <label>…or video URL</label>
+    <input type="url" id="vurl" placeholder="https://…/clip.mp4" autocapitalize="none">
+
+    <label>Effects</label>
+    <div class="chips" id="fx">
+      <div class="chip" data-k="bounce">bounce</div>
+      <div class="chip" data-k="reverse">reverse</div>
+      <div class="chip" data-k="audio">keep audio</div>
+    </div>
+
+    <label>Color preset</label>
+    <div class="chips" id="presets"></div>
+
+    <div class="row3" style="margin-top:12px">
+      <div><label>Start s</label><input type="text" id="s" inputmode="decimal" placeholder="0"></div>
+      <div><label>End s</label><input type="text" id="e" inputmode="decimal" placeholder="—"></div>
+      <div><label>Speed</label><input type="text" id="sp" inputmode="decimal" placeholder="1"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div><label>Keyframe s</label><input type="text" id="k" inputmode="decimal" placeholder="middle"></div>
+      <div><label>Device</label>
+        <select id="res">
+          <option value="auto">auto (max)</option><option value="16promax">16 Pro Max</option>
+          <option value="15promax">15 Pro Max</option><option value="15pro">15 Pro</option>
+          <option value="14">14 / 13</option><option value="se">SE</option>
+        </select></div>
+    </div>
+    <button class="btn" id="go" onclick="forge()">Forge Live Photo</button>
+  </div>
+  <div id="log">> ready_</div>
+</section>
+
+<section>
+  <div class="shead">Runs</div>
+  <div class="sbody" id="runs"><span class="muted">connect + refresh</span></div>
+  <div class="sbody" style="border-top:1px solid var(--line);padding-top:10px">
+    <button class="btn ghost" onclick="refresh()">↻ Refresh runs & downloads</button>
+  </div>
+</section>
+
+<section>
+  <div class="shead">Downloads</div>
+  <div class="sbody" id="assets"><span class="muted">finished pairs appear here — download BOTH files, upload together at <a href="https://www.icloud.com" target="_blank">icloud.com</a> → Photos</span></div>
+</section>
+
+<footer>liveforge · forged in kampala · no subscriptions harmed</footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const PRESETS=["none","cinematic","amg","noir","vivid","warm","cool","mono","fade"];
+let file=null, preset="none", fx={bounce:false,reverse:false,audio:false};
+
+PRESETS.forEach(p=>{
+  const c=document.createElement("div");
+  c.className="chip"+(p==="none"?" on":""); c.textContent=p;
+  c.onclick=()=>{preset=p;[...$("presets").children].forEach(x=>x.classList.toggle("on",x.textContent===p))};
+  $("presets").appendChild(c);
+});
+[...$("fx").children].forEach(c=>c.onclick=()=>{
+  fx[c.dataset.k]=!fx[c.dataset.k]; c.classList.toggle("on");
+});
+$("pick").onchange=e=>{
+  file=e.target.files[0]||null;
+  $("dropname").textContent=file?file.name:"Tap to choose a video";
+  $("drop").classList.toggle("hasfile",!!file);
+};
+["dragover","drop"].forEach(ev=>$("drop").addEventListener(ev,e=>{
+  e.preventDefault(); $("drop").classList.toggle("hot",ev==="dragover");
+  if(ev==="drop"&&e.dataTransfer.files[0]){file=e.dataTransfer.files[0];
+    $("dropname").textContent=file.name; $("drop").classList.add("hasfile");}
+}));
+
+function conn(){return {repo:localStorage.lf_repo||$("repo").value.trim(),
+                        pat:localStorage.lf_pat||$("pat").value.trim()}}
+function saveConn(){localStorage.lf_repo=$("repo").value.trim();
+  localStorage.lf_pat=$("pat").value.trim(); log("connection saved","ok"); refresh();}
+window.onload=()=>{ $("repo").value=localStorage.lf_repo||"";
+  $("pat").value=localStorage.lf_pat||""; if(localStorage.lf_repo) refresh(); };
+
+function log(m,cls){const d=$("log");
+  d.innerHTML+=`\n<span class="${cls||''}">&gt; ${m}</span>`; d.scrollTop=1e9;}
+
+function api(path,opts={}){
+  const {repo,pat}=conn();
+  return fetch(`https://api.github.com/repos/${repo}${path}`,{
+    ...opts, headers:{Authorization:`Bearer ${pat}`,
+      Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28",
+      ...(opts.headers||{})}});
+}
+
+function optTokens(){
+  const t=[];
+  if(fx.bounce)t.push("bounce"); if(fx.reverse)t.push("reverse"); if(fx.audio)t.push("audio");
+  if(preset!=="none")t.push(preset);
+  if($("sp").value&&$("sp").value!=="1")t.push("speed-"+$("sp").value);
+  if($("s").value&&$("s").value!=="0")t.push("s-"+$("s").value);
+  if($("e").value)t.push("e-"+$("e").value);
+  if($("k").value)t.push("k-"+$("k").value);
+  if($("res").value!=="auto")t.push("res-"+$("res").value);
+  return t;
+}
+
+async function forge(){
+  const {repo,pat}=conn();
+  if(!repo||!pat){log("set repo + PAT first","err");return;}
+  $("go").disabled=true;
+  try{
+    if(file){
+      if(file.size>42*1024*1024) throw new Error("file too large for API upload (~40 MB cap) — use URL mode");
+      log(`encoding ${file.name} (${(file.size/1048576).toFixed(1)} MB)…`,"info");
+      const b64=await new Promise((res,rej)=>{const r=new FileReader();
+        r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file);});
+      const ext=(file.name.match(/\.\w+$/)||[".mp4"])[0];
+      const base=file.name.replace(/\.\w+$/,"").replace(/[^a-zA-Z0-9-]/g,"");
+      const toks=optTokens();
+      const name=base+(toks.length?"__"+toks.join("_"):"")+ext;
+      log(`uploading inbox/${name}…`,"info");
+      const r=await api(`/contents/inbox/${encodeURIComponent(name)}`,{
+        method:"PUT",
+        body:JSON.stringify({message:`LiveForge Studio: ${name}`,content:b64})});
+      if(!r.ok) throw new Error((await r.json()).message||r.status);
+      log("uploaded — inbox workflow triggered ✓","ok");
+    }else if($("vurl").value.trim()){
+      log("dispatching URL workflow…","info");
+      const inputs={video_url:$("vurl").value.trim(),
+        start:$("s").value||"0", speed:$("sp").value||"1",
+        bounce:fx.bounce, reverse:fx.reverse,
+        preset:preset, res:$("res").value};
+      if($("e").value)inputs.end=$("e").value;
+      if($("k").value)inputs.keyframe=$("k").value;
+      const r=await api(`/actions/workflows/convert-url.yml/dispatches`,{
+        method:"POST", body:JSON.stringify({ref:"main",inputs})});
+      if(r.status!==204) throw new Error((await r.json()).message||r.status);
+      log("workflow dispatched ✓","ok");
+    }else throw new Error("choose a file or enter a URL");
+    log("runner spins up in ~30–90 s — hit refresh","info");
+    setTimeout(refresh,8000);
+  }catch(err){log(err.message,"err");}
+  $("go").disabled=false;
+}
+
+async function refresh(){
+  try{
+    const r=await api(`/actions/runs?per_page=6`);
+    if(!r.ok) throw new Error("runs: "+r.status);
+    const runs=(await r.json()).workflow_runs||[];
+    $("runs").innerHTML=runs.map(w=>`
+      <div class="runrow">
+        <div class="dot ${w.conclusion||w.status}"></div>
+        <div class="grow">#${w.run_number} ${w.name}</div>
+        <div style="color:var(--dim)">${w.conclusion||w.status}</div>
+      </div>`).join("")||'<span class="muted">no runs yet</span>';
+
+    const rel=await api(`/releases?per_page=4`);
+    if(rel.ok){
+      const rels=await rel.json();
+      $("assets").innerHTML=rels.flatMap(R=>R.assets.map(a=>`
+        <div class="asset">
+          <div class="grow">${a.name}<span style="color:var(--dim)"> · ${R.tag_name}</span></div>
+          <a class="dl" href="${a.browser_download_url}">↓ save</a>
+        </div>`)).join("")||'<span class="muted">no pairs published yet</span>';
+    }
+  }catch(err){log(err.message,"err");}
+}
+</script>
+</body>
+</html>

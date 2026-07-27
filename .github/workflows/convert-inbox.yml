@@ -38,7 +38,7 @@ jobs:
 
       - name: Convert all inbox videos
         if: steps.check.outputs.count != '0'
-        run: python liveforge.py inbox --batch --outdir outputs --bounce --res auto
+        run: python liveforge.py convert inbox --batch --filename-opts --outdir outputs --res auto
 
       - name: Commit results and clear inbox
         if: steps.check.outputs.count != '0'
@@ -50,6 +50,15 @@ jobs:
           git add -A outputs inbox
           git commit -m "LiveForge: converted inbox videos [skip ci]" || echo "nothing to commit"
           git push
+
+      - name: Publish as release (phone-friendly direct downloads)
+        if: steps.check.outputs.count != '0'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: live-${{ github.run_number }}
+          name: "Live Photos — run ${{ github.run_number }}"
+          files: outputs/*
+          body: "Download BOTH files of a pair, then upload them together at icloud.com → Photos."
 
       - name: Upload artifact copy
         if: steps.check.outputs.count != '0'

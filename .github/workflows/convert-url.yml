@@ -41,6 +41,9 @@ on:
         default: "auto"
         type: string
 
+permissions:
+  contents: write
+
 jobs:
   convert:
     runs-on: ubuntu-latest
@@ -63,7 +66,7 @@ jobs:
 
       - name: Convert
         run: |
-          ARGS=(source_video --outdir live_out)
+          ARGS=(convert source_video --outdir live_out)
           ARGS+=(--start "${{ inputs.start }}")
           [ -n "${{ inputs.end }}" ] && ARGS+=(--end "${{ inputs.end }}")
           ARGS+=(--speed "${{ inputs.speed }}")
@@ -73,6 +76,14 @@ jobs:
           ARGS+=(--preset "${{ inputs.preset }}")
           ARGS+=(--res "${{ inputs.res }}")
           python liveforge.py "${ARGS[@]}"
+
+      - name: Publish as release (phone-friendly direct downloads)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: live-url-${{ github.run_number }}
+          name: "Live Photo — run ${{ github.run_number }}"
+          files: live_out/*
+          body: "Download BOTH files, then upload them together at icloud.com → Photos."
 
       - name: Upload Live Photo pair
         uses: actions/upload-artifact@v4

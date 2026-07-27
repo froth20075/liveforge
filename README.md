@@ -4,7 +4,7 @@ Turn any video into a real iPhone **Live Photo / Live Wallpaper** — free, unli
 
 Every conversion produces `IMG_xxxx.JPG` + `IMG_xxxx.MOV` sharing an Apple Content Identifier — the exact mechanism iOS uses to recognize a Live Photo.
 
-## Three ways to run it
+## Four ways to run it
 
 ### 1. Locally (Windows / Mac / Linux)
 
@@ -20,9 +20,16 @@ python liveforge.py clip.mp4 --bounce --preset cinematic --res 15promax
 | `--reverse` | Play backwards |
 | `--bounce` | Forward-then-backward seamless loop |
 | `--keyframe 3.2` | Pick the still frame shown when not pressing |
-| `--preset` | `cinematic` `mono` `warm` `cool` `vivid` `fade` `noir` |
+| `--preset` | `cinematic` `amg` `mono` `warm` `cool` `vivid` `fade` `noir` |
 | `--res` | `15pro` `15promax` `14` `se` `auto` or `WxH` |
-| `--batch` | Convert every video in a folder |
+| `--keep-audio` | Real Live Photos have sound — keep it |
+| `--text "..."` | Caption overlay |
+| `--logo x.png` | PNG watermark (`--logo-pos tl/tr/bl/br/center`) |
+| `--lut file.cube` | Apply a color LUT |
+| `--crop top/center/bottom` | Crop anchor |
+| `--batch --filename-opts` | Folder mode with per-file filename options |
+
+Verify any pair: `python liveforge.py verify IMG.JPG IMG.MOV`
 
 Clips are auto-capped at 5 seconds — iOS's Live Photo sweet spot.
 
@@ -32,7 +39,18 @@ Clips are auto-capped at 5 seconds — iOS's Live Photo sweet spot.
 
 ### 3. GitHub Actions — inbox drop
 
-Drop a video into the `inbox/` folder (GitHub web upload works from your phone) and push. The workflow converts it, commits the pair to `outputs/`, and clears the inbox. Grab the files from `outputs/` or the run artifact.
+Drop a video into `inbox/` (GitHub web upload works from your phone). The workflow converts it, commits the pair to `outputs/`, **publishes it as a Release** (direct downloads, no login needed), and clears the inbox.
+
+Encode options right in the filename: `g63__bounce_amg_speed-1.5_k-3_res-15promax.mp4`
+Tokens: `bounce` `reverse` `audio` · any preset name · `speed-X` `s-X` `e-X` `k-X` `res-X`
+
+### 4. LiveForge Studio — phone browser control panel
+
+Enable **GitHub Pages** (Settings → Pages → branch `main`, folder `/docs`) and open the site on your iPhone. Save your repo + a fine-grained PAT (Contents:write, Actions:write) once, then: pick a video → toggle effects → **Forge**. Runs and finished pairs (with download buttons) appear right in the page.
+
+### Bonus: LAN server (instant mode)
+
+On any machine with FFmpeg + Python: `node server.js` — zero npm installs. Open the printed LAN URL in Safari on the same Wi-Fi, upload, get the pair back in seconds instead of waiting for a cloud runner.
 
 ## Getting the pair onto your iPhone
 
