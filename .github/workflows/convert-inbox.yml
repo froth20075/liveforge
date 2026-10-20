@@ -51,7 +51,7 @@ jobs:
 
       - name: Convert all inbox videos
         if: steps.check.outputs.count != '0'
-        run: python liveforge.py convert inbox --batch --filename-opts --outdir outputs --res auto
+        run: python liveforge_test_patch.py convert inbox --batch --filename-opts --outdir outputs --res auto
 
       - name: Commit results and clear inbox
         if: steps.check.outputs.count != '0'
